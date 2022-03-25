@@ -12,7 +12,7 @@ u_int16_t compute_icmp_checksum (const void *buff, int length)
 	return (u_int16_t)(~(sum + (sum >> 16)));
 }
 
-int send()
+int send(int sockfd, char *ip)
 {
     struct icmp header;
     header.icmp_type = ICMP_ECHO;
@@ -25,9 +25,9 @@ int send()
     struct sockaddr_in recipient;
     bzero (&recipient, sizeof(recipient));
     recipient.sin_family = AF_INET;
-    inet_pton(AF_INET, "adres_ip", &recipient.sin_addr);
+    inet_pton(AF_INET, ip, &recipient.sin_addr);
 
-    ttl = 42;
+    int ttl = 42;
     setsockopt (sockfd, IPPROTO_IP, IP_TTL, &ttl, sizeof(int));
 
 

@@ -25,10 +25,11 @@ int main(int argc, char* argv[])
     //    printf("good ip addres");
 	//	return 0;
 	//}
-	// to do chekc if regcomp output is error
+	// to do chekc if regcomp output is error and improve regex
 	if(result)
 	{
 		fprintf(stderr, "Error: IP address is wrong\n");
 	    return EXIT_FAILURE;
 	}
+	
 }
