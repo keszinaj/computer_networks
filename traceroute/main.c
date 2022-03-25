@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <regex.h>
-
+#include "traceroute.h"
 int main(int argc, char* argv[])
 {
 	//validation input data
@@ -31,5 +31,10 @@ int main(int argc, char* argv[])
 		fprintf(stderr, "Error: IP address is wrong\n");
 	    return EXIT_FAILURE;
 	}
-	
+	if(traceroute(argv[1]))
+	{
+		return 0;
+	}
+	return 1;
+
 }

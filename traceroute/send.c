@@ -1,6 +1,11 @@
-#include <stdlib.h>
+#include <netinet/ip.h>
+#include <arpa/inet.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <errno.h>
 #include <netinet/ip_icmp.h> //change
+#include <assert.h>
 u_int16_t compute_icmp_checksum (const void *buff, int length)
 {
 	u_int32_t sum;
@@ -12,7 +17,7 @@ u_int16_t compute_icmp_checksum (const void *buff, int length)
 	return (u_int16_t)(~(sum + (sum >> 16)));
 }
 
-int send(int sockfd, char *ip)
+int sendppp(int sockfd, char *ip, int t)
 {
     struct icmp header;
     header.icmp_type = ICMP_ECHO;
@@ -27,7 +32,7 @@ int send(int sockfd, char *ip)
     recipient.sin_family = AF_INET;
     inet_pton(AF_INET, ip, &recipient.sin_addr);
 
-    int ttl = 42;
+    int ttl = t;
     setsockopt (sockfd, IPPROTO_IP, IP_TTL, &ttl, sizeof(int));
 
 
@@ -39,4 +44,6 @@ int send(int sockfd, char *ip)
     (struct sockaddr*)&recipient,
     sizeof(recipient)
     );
+    printf("sent");
+    return 0;
 }

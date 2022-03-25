@@ -13,16 +13,18 @@ int receive(int fd)
     FD_SET(fd, &readfds);
     
     struct timeval timeout;
-    timeout.tv_sec = 1;
+    timeout.tv_sec = 5;
     timeout.tv_usec = 0;
-    for(int i = 0; i++; i<3)
+    printf("\nasdfg\n");
+    for(int i = 0; i<3;i++)
     {
         struct sockaddr_in 	sender;	
 		socklen_t sender_len = sizeof(sender);
 		u_int8_t buffer[IP_MAXPACKET];
-        int ready = select(fd, &readfds, NULL, NULL, &timeout);
+        int ready = select(fd+1, &readfds, NULL, NULL, &timeout);
         if(ready == 0)
         {
+            printf("rec\n");
             break;
         }
         if(ready < 0){
