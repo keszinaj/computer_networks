@@ -22,8 +22,8 @@ int send_packet(int sockfd, char *ip, int ttl)
     struct icmp header;
     header.icmp_type = ICMP_ECHO;
     header.icmp_code = 0;
-    header.icmp_hun.ih_idseq.icd_id = 10;
-    header.icmp_hun.ih_idseq.icd_seq= ttl; //some number for checks
+    header.icmp_hun.ih_idseq.icd_id = 69;
+    header.icmp_hun.ih_idseq.icd_seq= 69; //some number for checks
     header.icmp_cksum = 0;
     header.icmp_cksum = compute_icmp_checksum ((u_int16_t*)&header, sizeof(header));
     

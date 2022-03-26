@@ -61,17 +61,21 @@ int receive(int fd, int rn)
 			fprintf(stderr, "recvfrom error: %s\n", strerror(errno)); 
 			return EXIT_FAILURE;
 		}
-        char sender_ip_str[20]; 
-		inet_ntop(AF_INET, &(sender.sin_addr), sender_ip_str, sizeof(sender_ip_str));
-		printf ("Received IP packet with ICMP content from: %s\n", sender_ip_str);
+      //  char sender_ip_str[20]; 
+	//	inet_ntop(AF_INET, &(sender.sin_addr), sender_ip_str, sizeof(sender_ip_str));
+		//printf ("Received IP packet with ICMP content from: %s\n", sender_ip_str);
         
         //code from presentation{41}
         //read icmp header
-        struct ip* ip_header = (struct ip*) buffer;
-        u_int8_t* icmp_packet = buffer + 4 * ip_header->ip_hl;
-        struct icmp* icmp_header = (struct icmp*) icmp_packet;
-        printf("\n%d\n", icmp_header->icmp_hun.ih_idseq.icd_seq);
-        printf("\n%d\n", icmp_header->icmp_hun.ih_idseq.icd_id);
+        struct ip *ip_header = (struct ip*)buffer;
+        u_int8_t *icmp_len = buffer + 4 * ip_header->ip_hl;
+        struct icmp *icmp_header = (struct icmp*) icmp_len;
+        if(icmp_header->icmp_type == ICMP_TIME_EXCEEDED){
+            struct ip *ip_header2 = (struct ip*)(icmp_len + 8);
+             u_int8_t *icmp_len2 = icmp_len + 8 + 4 * ip_header2->ip_hl;
+            struct icmp *icmp_header2 = (struct icmp*) icmp_len2;
+            printf("%d\n", icmp_header2->icmp_hun.ih_idseq.icd_id);
+         }
        // printf("nie jes zle");
       // if(check_correctnes(fd, rn, icmp_header) == 0)
       //  {
