@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <regex.h>
 #include "traceroute.h"
+//gcc -o my_app main.c traceroute.c receive.c send.c
 int main(int argc, char* argv[])
 {
 	//validation input data

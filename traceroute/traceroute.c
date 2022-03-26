@@ -6,6 +6,7 @@
 #include <errno.h>
 #include "send.h"
 #include "receive.h"
+
 int traceroute(char *ip)
 {
     int sockfd = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
@@ -14,12 +15,11 @@ int traceroute(char *ip)
 		fprintf(stderr, "socket error: %s\n", strerror(errno)); 
 		return EXIT_FAILURE;
 	}
-    int t;
-    for(t =1; t < 10; t++)
+    for(int ttl = 1; ttl <= 30; ttl++)
     {
-    if(!sendppp(sockfd, ip, t))
+    if(!send_pipe(sockfd, ip, ttl))
     {
-        receive(sockfd);
+        receive(sockfd, ttl);
     }
     }
     return 0;
