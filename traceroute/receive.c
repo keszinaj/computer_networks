@@ -84,6 +84,7 @@ int receive(int fd, int id, int seq)
         return 0;
     }
     int same = strcmp(sender_ip_str[0], sender_ip_str[1]);
+    printf("same = %d\n received %d\n", same, received);
     if(received == 2)
     {
         if(same == 0)
@@ -97,8 +98,9 @@ int receive(int fd, int id, int seq)
         {
             if(strcmp(sender_ip_str[0], sender_ip_str[2])==0)
                 printf("%s %d", sender_ip_str[0], time_to_responde);
-            printf("%s ?", sender_ip_str[0]);
-            printf("%s ?", sender_ip_str[2]);
+            else
+                printf("%s ?", sender_ip_str[0]);
+                printf("%s ?", sender_ip_str[2]);
         }
         else if(strcmp(sender_ip_str[0], sender_ip_str[2])==1 && strcmp(sender_ip_str[1], sender_ip_str[2])==1)
         {
