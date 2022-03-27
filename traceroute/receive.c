@@ -5,41 +5,39 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
-int check_correctnes(int fd, int rn, struct icmp* icmp_header)
+
+int check_correctnes(int fd, int id, int seq, struct icmp* icmp_header, u_int8_t *icmp_len)
 {
-    //ICMP_TIME_EXCEEDED - when ttl == 0
-    //ICMP_ECHOREPLY when reach ip
     if(icmp_header->icmp_type != ICMP_TIME_EXCEEDED)
+        return 0;  
+    struct ip *ip_header_inside = (struct ip*)(icmp_len + 8);
+    u_int8_t *icmp_len_inside = icmp_len + 8 + 4 * ip_header_inside->ip_hl;
+    struct icmp *icmp_header_inside = (struct icmp*) icmp_len_inside;
+    //printf("%d\n", icmp_header_inside->icmp_hun.ih_idseq.icd_id);
+    //printf("%d\n", id);
+    if((int)icmp_header_inside->icmp_hun.ih_idseq.icd_id != id)
     {
-        if(icmp_header->icmp_type == ICMP_ECHOREPLY)
-        {
-            return 2;
-        }
-        return -1;
+        return 0;
     }
-    if(ntohs(icmp_header->icmp_hun.ih_idseq.icd_id) != getpid())
-    {
-        printf("\n%d\n", icmp_header->icmp_hun.ih_idseq.icd_seq);
-        return -1;
-    }
-    if(ntohs(icmp_header->icmp_hun.ih_idseq.icd_seq) != rn)
-    {
-        printf("rn");
-        return -1;
-    }
-    return 0;
+    if(icmp_header_inside->icmp_hun.ih_idseq.icd_seq != seq)
+        return 0;
+    return 1;
+    //printf("%d\n", icmp_header2->icmp_hun.ih_idseq.icd_id);
 }
-int receive(int fd, int rn)
+
+
+int receive(int fd, int id, int seq)
 {
     int received = 0;
 
     fd_set readfds;
     FD_ZERO(&readfds);
     FD_SET(fd, &readfds);
-    
+    char sender_ip_str[3][20];
     struct timeval timeout;
     timeout.tv_sec = 1;
     timeout.tv_usec = 0;
+    int time_to_responde = 0;
     for(int i = 0; i<3;i++)
     {
         struct sockaddr_in 	sender;	
@@ -51,7 +49,6 @@ int receive(int fd, int rn)
         {
             break;
         }
-        //other errors
         if(ready < 0){
             fprintf(stderr, "Error: Select error %s\n", strerror(errno));
             return EXIT_FAILURE;
@@ -61,28 +58,59 @@ int receive(int fd, int rn)
 			fprintf(stderr, "recvfrom error: %s\n", strerror(errno)); 
 			return EXIT_FAILURE;
 		}
-      //  char sender_ip_str[20]; 
-	//	inet_ntop(AF_INET, &(sender.sin_addr), sender_ip_str, sizeof(sender_ip_str));
-		//printf ("Received IP packet with ICMP content from: %s\n", sender_ip_str);
-        
-        //code from presentation{41}
-        //read icmp header
+        //Encapsulation
         struct ip *ip_header = (struct ip*)buffer;
         u_int8_t *icmp_len = buffer + 4 * ip_header->ip_hl;
         struct icmp *icmp_header = (struct icmp*) icmp_len;
-        if(icmp_header->icmp_type == ICMP_TIME_EXCEEDED){
-            struct ip *ip_header2 = (struct ip*)(icmp_len + 8);
-             u_int8_t *icmp_len2 = icmp_len + 8 + 4 * ip_header2->ip_hl;
-            struct icmp *icmp_header2 = (struct icmp*) icmp_len2;
-            printf("%d\n", icmp_header2->icmp_hun.ih_idseq.icd_id);
-         }
-       // printf("nie jes zle");
-      // if(check_correctnes(fd, rn, icmp_header) == 0)
-      //  {
-      //      printf("nie jes zle\n");
-      //  }
-
-    
+        if(check_correctnes(fd, id, seq, icmp_header, icmp_len))
+        {
+            printf("AAAAA|n");
+            inet_ntop(AF_INET, &(sender.sin_addr), sender_ip_str[received], sizeof(sender_ip_str[received]));
+            received++;
+        }
+        if(received == 1)
+        {
+            time_to_responde = 1000000 - timeout.tv_usec;
+        }
+    }
+    if(received == 0)
+    {
+        printf("* *");
+        return 0;
+    }
+    if(received == 1)
+    {
+        printf("%s ?", sender_ip_str[0]);
+        return 0;
+    }
+    int same = strcmp(sender_ip_str[0], sender_ip_str[1]);
+    if(received == 2)
+    {
+        if(same == 0)
+        {
+            printf("%s ?", sender_ip_str[0]);
+        }
+    }
+    else if(received == 3)
+    {
+        if(same == 0)
+        {
+            if(strcmp(sender_ip_str[0], sender_ip_str[2])==0)
+                printf("%s %d", sender_ip_str[0], time_to_responde);
+            printf("%s ?", sender_ip_str[0]);
+            printf("%s ?", sender_ip_str[2]);
+        }
+        else if(strcmp(sender_ip_str[0], sender_ip_str[2])==1 && strcmp(sender_ip_str[1], sender_ip_str[2])==1)
+        {
+            printf("%s ?", sender_ip_str[0]);
+            printf("%s ?", sender_ip_str[1]);
+            printf("%s ?", sender_ip_str[2]);
+        }
+        else{
+            printf("%s ?", sender_ip_str[0]);
+            printf("%s ?", sender_ip_str[1]);
+        }
+        
     }
     return EXIT_SUCCESS;
 

@@ -3,4 +3,5 @@ To do:
 2. make file
 3. check packet
 4. print 
-5. send detail
+5. send detail\
+5. check for error

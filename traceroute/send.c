@@ -17,13 +17,13 @@ u_int16_t compute_icmp_checksum (const void *buff, int length)
 	return (u_int16_t)(~(sum + (sum >> 16)));
 }
 
-int send_packet(int sockfd, char *ip, int ttl)
+int send_packet(int sockfd, char *ip, int ttl, int pid)
 {
     struct icmp header;
     header.icmp_type = ICMP_ECHO;
     header.icmp_code = 0;
-    header.icmp_hun.ih_idseq.icd_id = 69;
-    header.icmp_hun.ih_idseq.icd_seq= 69; //some number for checks
+    header.icmp_hun.ih_idseq.icd_id = pid;
+    header.icmp_hun.ih_idseq.icd_seq= ttl; 
     header.icmp_cksum = 0;
     header.icmp_cksum = compute_icmp_checksum ((u_int16_t*)&header, sizeof(header));
     
@@ -46,12 +46,13 @@ int send_packet(int sockfd, char *ip, int ttl)
     printf("sent");
     return 0;
 }
-int send_pipe(int sockfd, char *ip, int ttl)
+int send_pipe(int sockfd, char *ip, int ttl, int pid)
 {
     //send 3 packet
     for(int i=0; i< 3; i++)
     {
-        send_packet(sockfd, ip, ttl);
+        send_packet(sockfd, ip, ttl, pid);
+        //add CHECK ERROR
 
     }
     return 0;

@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <unistd.h>
 #include "send.h"
 #include "receive.h"
 
@@ -15,11 +16,12 @@ int traceroute(char *ip)
 		fprintf(stderr, "socket error: %s\n", strerror(errno)); 
 		return EXIT_FAILURE;
 	}
+    int pid = getpid();
     for(int ttl = 1; ttl <= 30; ttl++)
     {
-    if(!send_pipe(sockfd, ip, ttl))
+    if(!send_pipe(sockfd, ip, ttl, pid))
     {
-        receive(sockfd, ttl);
+        receive(sockfd, pid, ttl);
     }
     }
     return 0;
