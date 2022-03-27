@@ -32,7 +32,7 @@ int main(int argc, char* argv[])
 		fprintf(stderr, "Error: IP address is wrong\n");
 	    return EXIT_FAILURE;
 	}
-	if(traceroute(argv[1]))
+	if(traceroute(argv[1]) ==0)
 	{
 		return 0;
 	}

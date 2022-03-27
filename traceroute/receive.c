@@ -8,8 +8,10 @@
 
 int check_correctnes(int fd, int id, int seq, struct icmp* icmp_header, u_int8_t *icmp_len)
 {
-    if(icmp_header->icmp_type != ICMP_TIME_EXCEEDED)
+    if(icmp_header->icmp_type != ICMP_TIME_EXCEEDED && icmp_header->icmp_type != ICMP_ECHOREPLY)
         return 0;  
+    if(icmp_header->icmp_type == ICMP_ECHOREPLY)
+        return 2;
     struct ip *ip_header_inside = (struct ip*)(icmp_len + 8);
     u_int8_t *icmp_len_inside = icmp_len + 8 + 4 * ip_header_inside->ip_hl;
     struct icmp *icmp_header_inside = (struct icmp*) icmp_len_inside;
@@ -38,6 +40,7 @@ int receive(int fd, int id, int seq)
     timeout.tv_sec = 1;
     timeout.tv_usec = 0;
     int time_to_responde = 0;
+    int pom;
     for(int i = 0; i<3;i++)
     {
         struct sockaddr_in 	sender;	
@@ -62,11 +65,18 @@ int receive(int fd, int id, int seq)
         struct ip *ip_header = (struct ip*)buffer;
         u_int8_t *icmp_len = buffer + 4 * ip_header->ip_hl;
         struct icmp *icmp_header = (struct icmp*) icmp_len;
-        if(check_correctnes(fd, id, seq, icmp_header, icmp_len))
+        pom= check_correctnes(fd, id, seq, icmp_header, icmp_len);
+        if(pom == 1)
         {
-            printf("AAAAA|n");
+           // printf("AAAAA|n");
             inet_ntop(AF_INET, &(sender.sin_addr), sender_ip_str[received], sizeof(sender_ip_str[received]));
             received++;
+        }
+        else if(pom == 2)
+        {
+            inet_ntop(AF_INET, &(sender.sin_addr), sender_ip_str[received], sizeof(sender_ip_str[received]));
+            printf("%s %ld",sender_ip_str[0], 1000000 - timeout.tv_usec);
+            return 1;
         }
         if(received == 1)
         {
@@ -75,12 +85,12 @@ int receive(int fd, int id, int seq)
     }
     if(received == 0)
     {
-        printf("* *");
+        printf("* *\n");
         return 0;
     }
     if(received == 1)
     {
-        printf("%s ?", sender_ip_str[0]);
+        printf("%s ?\n", sender_ip_str[0]);
         return 0;
     }
     int same = strcmp(sender_ip_str[0], sender_ip_str[1]);
@@ -89,7 +99,7 @@ int receive(int fd, int id, int seq)
     {
         if(same == 0)
         {
-            printf("%s ?", sender_ip_str[0]);
+            printf("%s ?\n", sender_ip_str[0]);
         }
     }
     else if(received == 3)
@@ -97,20 +107,20 @@ int receive(int fd, int id, int seq)
         if(same == 0)
         {
             if(strcmp(sender_ip_str[0], sender_ip_str[2])==0)
-                printf("%s %d", sender_ip_str[0], time_to_responde);
+                printf("%s %d\n", sender_ip_str[0], time_to_responde);
             else
-                printf("%s ?", sender_ip_str[0]);
-                printf("%s ?", sender_ip_str[2]);
+                printf("%s ?\n", sender_ip_str[0]);
+                printf("%s ?\n", sender_ip_str[2]);
         }
         else if(strcmp(sender_ip_str[0], sender_ip_str[2])==1 && strcmp(sender_ip_str[1], sender_ip_str[2])==1)
         {
-            printf("%s ?", sender_ip_str[0]);
-            printf("%s ?", sender_ip_str[1]);
-            printf("%s ?", sender_ip_str[2]);
+            printf("%s ?\n", sender_ip_str[0]);
+            printf("%s ?\n", sender_ip_str[1]);
+            printf("%s ?\n", sender_ip_str[2]);
         }
         else{
-            printf("%s ?", sender_ip_str[0]);
-            printf("%s ?", sender_ip_str[1]);
+            printf("%s ?\n", sender_ip_str[0]);
+            printf("%s ?\n", sender_ip_str[1]);
         }
         
     }

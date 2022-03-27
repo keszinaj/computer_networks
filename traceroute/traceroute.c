@@ -11,7 +11,7 @@
 int traceroute(char *ip)
 {
     int sockfd = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
-    printf("traceroute");
+   // printf("traceroute");
 	if (sockfd < 0) {
 		fprintf(stderr, "socket error: %s\n", strerror(errno)); 
 		return EXIT_FAILURE;
@@ -21,7 +21,8 @@ int traceroute(char *ip)
     {
     if(!send_pipe(sockfd, ip, ttl, pid))
     {
-        receive(sockfd, pid, ttl);
+        if(receive(sockfd, pid, ttl)== 1)
+           return 0;
     }
     }
     return 0;

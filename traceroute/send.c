@@ -43,7 +43,7 @@ int send_packet(int sockfd, char *ip, int ttl, int pid)
     (struct sockaddr*)&recipient,
     sizeof(recipient)
     );
-    printf("sent");
+   // printf("sent");
     return 0;
 }
 int send_pipe(int sockfd, char *ip, int ttl, int pid)
