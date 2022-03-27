@@ -1,0 +1,6 @@
+To do:
+1. test in python file
+2. make file
+3. check packet
+4. print 
+5. send detail
