@@ -23,7 +23,7 @@ int send_packet(int sockfd, char *ip, int ttl, int pid)
     header.icmp_type = ICMP_ECHO;
     header.icmp_code = 0;
     header.icmp_hun.ih_idseq.icd_id = pid;
-    header.icmp_hun.ih_idseq.icd_seq= ttl; 
+    header.icmp_hun.ih_idseq.icd_seq= ttl; //must be different
     header.icmp_cksum = 0;
     header.icmp_cksum = compute_icmp_checksum ((u_int16_t*)&header, sizeof(header));
     
