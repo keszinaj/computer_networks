@@ -5,11 +5,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
-
+#include "prettyprint.h"
 #define EXIT_END 2
 #define icmp_heder_len 8 
-
-
 
 int check_correctnes(int id, int seq, struct icmp* icmp_header, u_int8_t *icmp_len)
 {
@@ -104,8 +102,8 @@ int receive(int fd, char *ip, int id, int seq)
             //check if ip is correct
             if(strcmp(sender_ip_str[0], ip)==0)
             {
-                printf("%s %ld",sender_ip_str[0], 1000000 - timeout.tv_usec);
-                return 1;
+                printf("%d.  %s    %ld microseconds\n", seq,sender_ip_str[0], 1000000 - timeout.tv_usec);
+                return EXIT_END;
             }   
         }
         //colculate time in microseconds
@@ -114,48 +112,6 @@ int receive(int fd, char *ip, int id, int seq)
             time_to_responde = 1000000 - timeout.tv_usec;
         }
     }
-    if(received == 0)
-    {
-        printf("* *\n");
-        return 0;
-    }
-    if(received == 1)
-    {
-        printf("%s ?\n", sender_ip_str[0]);
-        return 0;
-    }
-    int same = strcmp(sender_ip_str[0], sender_ip_str[1]);
-    if(received == 2)
-    {
-        if(same == 0)
-        {
-            printf("%s ?\n", sender_ip_str[0]);
-        }
-    }
-    else if(received == 3)
-    {
-        if(same == 0)
-        {
-            if(strcmp(sender_ip_str[0], sender_ip_str[2])==0)
-                printf("%s %d\n", sender_ip_str[0], time_to_responde);
-            else
-            {
-                printf("%s ?\n", sender_ip_str[0]);
-                printf("%s ?\n", sender_ip_str[2]); ///eeee an pewno?
-            }
-        }
-        else if(strcmp(sender_ip_str[0], sender_ip_str[2])==1 && strcmp(sender_ip_str[1], sender_ip_str[2])==1)
-        {
-            printf("%s ?\n", sender_ip_str[0]);
-            printf("%s ?\n", sender_ip_str[1]);
-            printf("%s ?\n", sender_ip_str[2]);
-        }
-        else{
-            printf("%s ?\n", sender_ip_str[0]);
-            printf("%s ?\n", sender_ip_str[1]);
-        }
-        
-    }
+    pretty_print(received, sender_ip_str, time_to_responde, seq);
     return EXIT_SUCCESS;
-
 }

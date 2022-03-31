@@ -22,7 +22,7 @@ int traceroute(char *ip)
     {
        if(!send_pipe(sockfd, ip, ttl, pid))
        {
-           if(receive(sockfd, ip, pid, ttl)== 1)
+           if(receive(sockfd, ip, pid, ttl)== 2)
               return 0;
        }
     }
