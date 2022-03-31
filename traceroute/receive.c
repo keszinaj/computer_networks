@@ -61,7 +61,7 @@ int receive(int fd, char *ip, int id, int seq)
     timeout.tv_sec = 1;
     timeout.tv_usec = 0;
 
-    int time_to_responde = 0;
+    double time_to_responde = 0;
     int pom;
 
     for(int i = 0; i<3;i++)
@@ -102,7 +102,8 @@ int receive(int fd, char *ip, int id, int seq)
             //check if ip is correct
             if(strcmp(sender_ip_str[0], ip)==0)
             {
-                printf("%d.  %s    %ld microseconds\n", seq,sender_ip_str[0], 1000000 - timeout.tv_usec);
+                time_to_responde = (1000000 - timeout.tv_usec)/1000;
+                printf("%d.  %s    %.3f ms\n", seq,sender_ip_str[0], time_to_responde);
                 return EXIT_END;
             }   
         }
