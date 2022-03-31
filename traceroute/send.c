@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
-#include <netinet/ip_icmp.h> //change
+#include <netinet/ip_icmp.h> 
 #include <assert.h>
 u_int16_t compute_icmp_checksum (const void *buff, int length)
 {
@@ -17,35 +17,6 @@ u_int16_t compute_icmp_checksum (const void *buff, int length)
 	return (u_int16_t)(~(sum + (sum >> 16)));
 }
 
-int send_packet(int sockfd, char *ip, int ttl, int pid)
-{
-    struct icmp header;
-    header.icmp_type = ICMP_ECHO;
-    header.icmp_code = 0;
-    header.icmp_hun.ih_idseq.icd_id = pid;
-    header.icmp_hun.ih_idseq.icd_seq= ttl; //must be different
-    header.icmp_cksum = 0;
-    header.icmp_cksum = compute_icmp_checksum ((u_int16_t*)&header, sizeof(header));
-    
-    struct sockaddr_in recipient;
-    bzero (&recipient, sizeof(recipient));
-    recipient.sin_family = AF_INET;
-    inet_pton(AF_INET, ip, &recipient.sin_addr);
-    //set ttl
-    setsockopt (sockfd, IPPROTO_IP, IP_TTL, &ttl, sizeof(int));
-
-
-    ssize_t bytes_sent = sendto (
-    sockfd,
-    &header,
-    sizeof(header),
-    0,
-    (struct sockaddr*)&recipient,
-    sizeof(recipient)
-    );
-   // printf("sent");
-    return 0;
-}
 int send_pipe(int sockfd, char *ip, int ttl, int pid)
 {
     //create ICMP Packet
@@ -60,7 +31,7 @@ int send_pipe(int sockfd, char *ip, int ttl, int pid)
     int correct;
     //structure deskribing socket adres
     struct sockaddr_in recipient;
-    bzero(&recipient, sizeof(recipient));
+    memset(&recipient, 0, sizeof(recipient));
     recipient.sin_family = AF_INET;
     
     // convert IPv4 and IPv6 addresses from text to binary form
@@ -73,15 +44,20 @@ int send_pipe(int sockfd, char *ip, int ttl, int pid)
     //we must set ttl using this function
     correct = setsockopt(sockfd, IPPROTO_IP, IP_TTL, &ttl, sizeof(int));
     if(correct < 0) {
-		fprintf(stderr, "socket error: %s\n", strerror(errno)); 
+		fprintf(stderr, "Error: socket error: %s\n", strerror(errno)); 
 		return EXIT_FAILURE;
 	}
     //send 3 packet
     for(int i=0; i< 3; i++)
     {
-        send_packet(sockfd, ip, ttl, pid);
-        //add CHECK ERROR
-
+        //seq must be different every time 
+        header.icmp_hun.ih_idseq.icd_seq+=i;
+        //sent packet
+        correct = sendto(sockfd, &header, sizeof(header), 0, (struct sockaddr*)&recipient, sizeof(recipient));
+        if(correct < 0) {
+		   fprintf(stderr, "Error: sending failed: %s\n", strerror(errno)); 
+		   return EXIT_FAILURE;
+	    }
     }
-    return 0;
+    return EXIT_SUCCESS;
 }

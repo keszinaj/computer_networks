@@ -17,7 +17,7 @@ int traceroute(char *ip)
 		return EXIT_FAILURE;
 	}
     int pid = getpid();
-    int correct;
+    //int correct;
     for(int ttl = 1; ttl <= 30; ttl++)
     {
        if(!send_pipe(sockfd, ip, ttl, pid))
