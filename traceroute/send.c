@@ -6,6 +6,8 @@
 #include <errno.h>
 #include <netinet/ip_icmp.h> 
 #include <assert.h>
+
+//function from skos
 u_int16_t compute_icmp_checksum (const void *buff, int length)
 {
 	u_int32_t sum;

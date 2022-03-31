@@ -6,43 +6,66 @@
 #include <string.h>
 #include <errno.h>
 
-#define EXIT_END 2;
+#define EXIT_END 2
+#define icmp_heder_len 8 
+
+
+
 int check_correctnes(int id, int seq, struct icmp* icmp_header, u_int8_t *icmp_len)
 {
+    //check header
     if(icmp_header->icmp_type != ICMP_TIME_EXCEEDED && icmp_header->icmp_type != ICMP_ECHOREPLY)
         return EXIT_FAILURE;  
     if(icmp_header->icmp_type == ICMP_ECHOREPLY)
+    {
         return EXIT_END;
+    }
+    /*
+    we have this structure in memory
+                |->icmp_len
+    +-----------+---------------+------------------------------------------+
+    | Ip_Header | ICMP_Header   | Data: Ip_Header_old Icmo_Header_old rest |
+    +-----------+---------------+------------------------------------------+
+    IP_header_len->icmp_heder_len-> This is what we sent
+    */
     struct ip *ip_header_inside = (struct ip*)(icmp_len + 8);
     u_int8_t *icmp_len_inside = icmp_len + 8 + 4 * ip_header_inside->ip_hl;
     struct icmp *icmp_header_inside = (struct icmp*) icmp_len_inside;
+    //check structure
     if((int)icmp_header_inside->icmp_hun.ih_idseq.icd_id != id)
     {
         return EXIT_FAILURE;
     }
-    uint_16_t seq_received = icmp_header_inside->icmp_hun.ih_idseq.icd_seq;
+
+    uint16_t seq_received = icmp_header_inside->icmp_hun.ih_idseq.icd_seq;
     if(seq_received < 4*seq || seq_received > 4*seq+4)
     {
         return EXIT_FAILURE;
     }
-        //return 0;
+    
+    //check if packet reach a target ip
     return EXIT_SUCCESS;
 }
 
 
-int receive(int fd, int id, int seq)
+int receive(int fd, char *ip, int id, int seq)
 {
     int received = 0;
 
     fd_set readfds;
     FD_ZERO(&readfds);
     FD_SET(fd, &readfds);
+    
     char sender_ip_str[3][20];
+    
+    //set time
     struct timeval timeout;
     timeout.tv_sec = 1;
     timeout.tv_usec = 0;
+
     int time_to_responde = 0;
     int pom;
+
     for(int i = 0; i<3;i++)
     {
         struct sockaddr_in 	sender;	
@@ -67,8 +90,10 @@ int receive(int fd, int id, int seq)
         struct ip *ip_header = (struct ip*)buffer;
         u_int8_t *icmp_len = buffer + 4 * ip_header->ip_hl;
         struct icmp *icmp_header = (struct icmp*) icmp_len;
-        pom= check_correctnes(id, seq, icmp_header, icmp_len);
-        if(pom == 1)
+
+        pom = check_correctnes(id, seq, icmp_header, icmp_len);
+
+        if(pom == 0)
         {
             inet_ntop(AF_INET, &(sender.sin_addr), sender_ip_str[received], sizeof(sender_ip_str[received]));
             received++;
@@ -76,9 +101,14 @@ int receive(int fd, int id, int seq)
         else if(pom == 2)
         {
             inet_ntop(AF_INET, &(sender.sin_addr), sender_ip_str[received], sizeof(sender_ip_str[received]));
-            printf("%s %ld",sender_ip_str[0], 1000000 - timeout.tv_usec);
-            return 1;
+            //check if ip is correct
+            if(strcmp(sender_ip_str[0], ip)==0)
+            {
+                printf("%s %ld",sender_ip_str[0], 1000000 - timeout.tv_usec);
+                return 1;
+            }   
         }
+        //colculate time in microseconds
         if(received == 1)
         {
             time_to_responde = 1000000 - timeout.tv_usec;
