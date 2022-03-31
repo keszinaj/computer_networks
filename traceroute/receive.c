@@ -6,25 +6,27 @@
 #include <string.h>
 #include <errno.h>
 
+#define EXIT_END 2;
 int check_correctnes(int id, int seq, struct icmp* icmp_header, u_int8_t *icmp_len)
 {
     if(icmp_header->icmp_type != ICMP_TIME_EXCEEDED && icmp_header->icmp_type != ICMP_ECHOREPLY)
-        return 0;  
+        return EXIT_FAILURE;  
     if(icmp_header->icmp_type == ICMP_ECHOREPLY)
-        return 2;
+        return EXIT_END;
     struct ip *ip_header_inside = (struct ip*)(icmp_len + 8);
     u_int8_t *icmp_len_inside = icmp_len + 8 + 4 * ip_header_inside->ip_hl;
     struct icmp *icmp_header_inside = (struct icmp*) icmp_len_inside;
-    //printf("%d\n", icmp_header_inside->icmp_hun.ih_idseq.icd_id);
-    //printf("%d\n", id);
     if((int)icmp_header_inside->icmp_hun.ih_idseq.icd_id != id)
     {
-        return 0;
+        return EXIT_FAILURE;
     }
-    if(icmp_header_inside->icmp_hun.ih_idseq.icd_seq != seq)
-        return 0;
-    return 1;
-    //printf("%d\n", icmp_header2->icmp_hun.ih_idseq.icd_id);
+    uint_16_t seq_received = icmp_header_inside->icmp_hun.ih_idseq.icd_seq;
+    if(seq_received < 4*seq || seq_received > 4*seq+4)
+    {
+        return EXIT_FAILURE;
+    }
+        //return 0;
+    return EXIT_SUCCESS;
 }
 
 
@@ -68,7 +70,6 @@ int receive(int fd, int id, int seq)
         pom= check_correctnes(id, seq, icmp_header, icmp_len);
         if(pom == 1)
         {
-           // printf("AAAAA|n");
             inet_ntop(AF_INET, &(sender.sin_addr), sender_ip_str[received], sizeof(sender_ip_str[received]));
             received++;
         }
@@ -94,7 +95,6 @@ int receive(int fd, int id, int seq)
         return 0;
     }
     int same = strcmp(sender_ip_str[0], sender_ip_str[1]);
-    printf("same = %d\n received %d\n", same, received);
     if(received == 2)
     {
         if(same == 0)
