@@ -17,13 +17,14 @@ int traceroute(char *ip)
 		return EXIT_FAILURE;
 	}
     int pid = getpid();
+    int correct;
     for(int ttl = 1; ttl <= 30; ttl++)
     {
-    if(!send_pipe(sockfd, ip, ttl, pid))
-    {
-        if(receive(sockfd, pid, ttl)== 1)
-           return 0;
-    }
+       if(!send_pipe(sockfd, ip, ttl, pid))
+       {
+           if(receive(sockfd, pid, ttl)== 1)
+              return 0;
+       }
     }
     return 0;
 }
