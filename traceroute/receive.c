@@ -102,16 +102,30 @@ int receive(int fd, char *ip, int id, int seq)
             //check if ip is correct
             if(strcmp(sender_ip_str[0], ip)==0)
             {
-                time_to_responde = (1000000 - timeout.tv_usec)/1000;
-                printf("%d.  %s    %.3f ms\n", seq,sender_ip_str[0], time_to_responde);
-                return EXIT_END;
+                //when we reach ip it answear us with the same seq number so to avoid porblem with other commend as ping I add that check
+                uint16_t seq_received = icmp_header->icmp_hun.ih_idseq.icd_seq;
+                if(seq_received >= 4*seq && seq_received < 4*seq+4)
+                {
+                    time_to_responde = (1000000 - timeout.tv_usec)/1000;
+                    printf("%d.  %s    %.3f ms\n", seq,sender_ip_str[0], time_to_responde);
+                    return EXIT_END;
+                }
             }   
         }
-        //colculate time in microseconds
+        else{
+            /*
+            To solve a problem that occurs when programs run 
+            at the same time on the same ip address
+            */
+            i--;
+            continue;
+        }
         if(received == 1)
         {
             time_to_responde = 1000000 - timeout.tv_usec;
         }
+        //colculate time in microseconds
+        
     }
     pretty_print(received, sender_ip_str, time_to_responde, seq);
     return EXIT_SUCCESS;
