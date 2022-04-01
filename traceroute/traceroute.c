@@ -1,10 +1,10 @@
-#include <netinet/ip.h>
-#include <arpa/inet.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
 #include <unistd.h>
+#include <netinet/ip.h>
+#include <arpa/inet.h>
 #include "send.h"
 #include "receive.h"
 
@@ -23,11 +23,11 @@ int traceroute(char *ip)
        if(!send_pipe(sockfd, ip, ttl, pid))
        {
            if(receive(sockfd, ip, pid, ttl)== 2)
-              return 0;
+              return EXIT_SUCCESS;
        }
        else{
            return EXIT_FAILURE;
        }
     }
-    return 0;
+    return EXIT_SUCCESS;
 }

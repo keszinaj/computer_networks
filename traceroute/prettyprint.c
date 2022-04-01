@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 //print all cases
 void pretty_print(int received, char sender_ip_str[3][20], double time, int num)
 {

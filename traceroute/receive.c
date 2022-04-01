@@ -1,11 +1,12 @@
-#include <netinet/ip.h>
-#include <arpa/inet.h>
-#include <netinet/ip_icmp.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <errno.h>
+#include <string.h>
+#include <netinet/ip.h>
+#include <netinet/ip_icmp.h>
+#include <arpa/inet.h>
 #include "prettyprint.h"
+
 #define EXIT_END 2
 #define icmp_heder_len 8 
 
