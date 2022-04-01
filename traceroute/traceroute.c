@@ -25,6 +25,9 @@ int traceroute(char *ip)
            if(receive(sockfd, ip, pid, ttl)== 2)
               return 0;
        }
+       else{
+           return EXIT_FAILURE;
+       }
     }
     return 0;
 }
