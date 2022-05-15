@@ -1,2 +1,4 @@
-1.
+1. Jakoś trzeba pomysleć jak te okna reprezentować?
+2. Jak odróżniać który pakiet przyszedł a który nie?
+3. chyba powinienem jeszcze zrobić connect
 

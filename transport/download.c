@@ -5,6 +5,19 @@
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
+
+int get()
+{
+
+}
+int send_request()
+{
+
+}
+receive_data()
+{
+    
+}
 int download()
 {
     // na podsawiw wykładu 4
@@ -23,5 +36,11 @@ int download()
     {
         fprintf(stderr, "Error: Wrong Ip address"); 
         return EXIT_FAILURE;
+    }
+    int downloaded = 0;
+    while(downloaded < size)
+    {
+        send_request();
+        receive_data();
     }
 }
