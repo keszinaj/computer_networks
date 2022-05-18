@@ -10,3 +10,9 @@ maksymalna ilość pakietów do odebrania 10 000
 
 start+długość-1. Uwaga: bajty
 pliku numerowane są od zera.
+
+
+
+Dobra teraz:
+Myślimy jak to odbierać
+Ewentualnie testujemy to co napisałem
