@@ -5,51 +5,48 @@
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
-
-// implementacj samego okna
-// TO TRZEBA DEFINE!!!!
 int const window_size = 1000;
 int const packet_length = 1000;
 int free_space = window_size;
-int start_global = 0; //głupia nazwa
 int filled[window_size] = {0};
-char window[window_size][packet_length] ={0};
-int next()
-{
-    if(start == window_size-1)
-    {
-        return 0;
-    }
-    else
-    {
-        return start+1;
-    }
-}
+char window[window_size][packet_length];
+int first_to_save = 0;
+int last_to_save = 0;
+int all_memory_square = 1;
+int start_cash= 0;
+int length_of_last_packet = 0;
 
-int send_request(size_t start, size_t length)
+int get(int sockfd, struct sockaddr_in addr, int start, int length)
 {
-    char request_str[100];
-    sprintf(request_str, "GET %ld %ld\n", start, length);
-    int check = sendto(sockfd, request_str, message_len, 0, (struct sockaddr*) &server_address, sizeof(server_address)) != message_len);
-    if(check< 0)
+    char buffer[40];
+    sprintf(buffer, "GET %ld %ld\n", start, length);
+    size_t buffer_len = strlen(buffer);
+    if (sendto(sockfd, buffer, length, 0, (struct sockaddr *) &addr, sizeof(addr)) < 0)
     {
-        printf("add error msg");
+        fprintf(stderr, "ERROR: Problem with get %s\n", strerror(errno));
+        return EXIT_FAILURE;
     }
 
+    free(buffer);
+    return 0;
 }
-receive_data(int number_of_sent)
+int receive_data(int sent, int fd, struct sockaddr_in server_address)
 {
     fd_set readfds;
     FD_ZERO(&readfds);
     FD_SET(fd, &readfds);
+    //set time
     struct timeval timeout;
     timeout.tv_sec = 1;
     timeout.tv_usec = 0;
-     char *buffer = malloc(1000);
-    while(number_of_sent > 0)
+
+    struct sockaddr_in 	sender;	
+	socklen_t sender_len = sizeof(sender);
+	u_int8_t buffer[IP_MAXPACKET];
+    int pos, len, add ,k;
+    for(int i = 0; i<sent; i++)
     {
         int ready = select(fd+1, &readfds, NULL, NULL, &timeout);
-        //chceck if timeout
         if(ready == 0)
         {
             break;
@@ -57,19 +54,43 @@ receive_data(int number_of_sent)
         if(ready < 0){
             fprintf(stderr, "Error: Select error %s\n", strerror(errno));
             return EXIT_FAILURE;
-         }
-         else{
-            ssize_t packet_len = recvfrom (fd, buffer, IP_MAXPACKET, 0, (struct sockaddr*)&sender, &sender_len);
-		    if (packet_len < 0) {
-			    fprintf(stderr, "recvfrom error: %s\n", strerror(errno)); 
-			    return EXIT_FAILURE;
+        }
+        ssize_t packet_len = recvfrom (fd, buffer, IP_MAXPACKET, 0, (struct sockaddr*)&sender, &sender_len);
+		if (packet_len < 0) {
+			fprintf(stderr, "recvfrom error: %s\n", strerror(errno)); 
+			return EXIT_FAILURE;
+		}
+        if (sender.sin_addr.s_addr != server_address.sin_addr.s_addr || sender.sin_port != server_address.sin_port) {
+            break;
+        }
+        sscanf(buffer, "DATA %ld %ld\n", &pos, &len);
+        //okej teraz trzeba znalesc gdzie dac ten datagram i go tam zapisac
+        if(len ==1000)
+        {
+            add = pos-start_cash;
+            add = add/1000;
+            k = first_to_save + add;
+            if(k >= window_size)
+            {
+                k -= window_size; 
             }
-            //check czy to dobre ip
-            
-         }
+            if(filled[k]==0)
+            {
+                memcpy(window[k][0], strchr(buffer, '\n') + 1, len);
+                filled[k]=1;
+            }
 
+        }
+        else{
+            if(filled[last_to_save]==0)
+            {
+                memcpy(window[last_to_save][0], strchr(buffer, '\n') + 1, len);
+                filled[last_to_save]=1;
+            }
+        }
     }
-    
+    save_in_file();
+    return 0;
 }
 int download(char *addr, int port, FILE *file, int size)
 {
@@ -90,33 +111,63 @@ int download(char *addr, int port, FILE *file, int size)
         fprintf(stderr, "Error: Wrong Ip address"); 
         return EXIT_FAILURE;
     }
-
-
-
-    int amount_of_packets = 1;
-    int next_in_window = 0;
-    int amount_of_packet_to_send =1;
-    //pre config
-    if(size>1000)
+    if(size<packet_length)
     {
-        amount_of_packets = ceil(size/1000);//sufit 
-        
-        else if(amount_of_packets > 1000)
+        length_of_last_packet = size;
+    }
+    else
+    {
+        int cash_needed = ceil(size/1000);
+        if(cash_needed>window_size)
         {
-            next_in_window = 1000;
-            amount_of_packet_to_send= 1000;
+            last_to_save = window_size - 1;
+            all_memory_square = window_size;
         }
-        else{
-            amount_of_packet_to_send= amount_of_packets
+        else
+        {
+            last_to_save = cash_needed - 1;
+            all_memory_square = cash_needed;
+        }
+        length_of_last_packet = size%packet_length;
+        if(length_of_last_packet == 0)
+        {
+            length_of_last_packet = packet_length;
         }
     }
-    int downloaded = 0;
-    while(downloaded < size)
+
+    int j,i;
+    int sent = 0;
+    while(size>0)
     {
-        while(amount_of_packet_to_send)
+        for(i =0; i<all_memory_square; i++)
         {
-            send_request(start_global, next_in_window);
+            j = first_to_save+i;
+            if(j>=window_size)
+            {
+               j = j - window_size;
+            }
+            if(filled[j] == 0)
+            {
+                get(start_cash+i*packet_length, packet_length);
+                sent++;
+            }
+            if(filled[j] > 0)
+            {
+                continue;
+            }
+            //ostatni pakiet
+            if(filled[j] == -1)
+            {
+                continue;
+            }
         }
-        receive_data();
+        receive_data(sent);
+
+
     }
+
+
+
+   
+   
 }

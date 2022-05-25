@@ -11,6 +11,7 @@ int last_to_save = 0;
 int all_memory_square = 1;
 int start_cash= 0;
 int length_of_last_packet = 0;
+void get(int start, int length)
 int proba(int size)
 {
     //preprocesing dla pierwszej pętli while
