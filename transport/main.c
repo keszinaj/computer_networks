@@ -1,6 +1,6 @@
 #include<stdlib.h>
 #include<stdio.h>
-
+#include "download.h"
 int main(int argc, char *argv[])
 {
 	// validation input data
@@ -10,7 +10,7 @@ int main(int argc, char *argv[])
 		return EXIT_FAILURE;
 	}
 	int port = atoi(argv[2]);
-	if(port < 0 || socket > 65535)
+	if(port < 0 || port > 65535)
 	{
 		fprint(stderr, "Error: Wrong socket number");
 		return EXIT_FAILURE;
@@ -23,6 +23,13 @@ int main(int argc, char *argv[])
 		return EXIT_FAILURE;
 	}
 	int size = atoi(argv[4]);
+	int check = download(argv[1], port, file, size);
+	if(check == EXIT_FAILURE)
+	{
+		fprintf(stderr, "Error: Problem with download\n");
+		return EXIT_FAILURE;	
+	}
+
 	
 	return 0;
 }

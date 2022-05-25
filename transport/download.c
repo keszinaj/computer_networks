@@ -71,7 +71,7 @@ receive_data(int number_of_sent)
     }
     
 }
-int download(int size)
+int download(char *addr, int port, FILE *file, int size)
 {
     // na podsawiw wykładu 4
     int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
