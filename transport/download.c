@@ -15,7 +15,7 @@ int last_to_save = 0;
 int all_memory_square = 1;
 int start_cash= 0;
 int length_of_last_packet = 0;
-
+int size = 0;
 int get(int sockfd, struct sockaddr_in addr, int start, int length)
 {
     char buffer[40];
@@ -30,7 +30,37 @@ int get(int sockfd, struct sockaddr_in addr, int start, int length)
     free(buffer);
     return 0;
 }
-int receive_data(int sent, int fd, struct sockaddr_in server_address)
+
+void save_in_file(FILE *fd)
+{
+    int i = first_to_save;
+    if(filled[i]== 0)
+    {
+        return;
+    }
+    while(filled[i]>0)
+    {
+        fwrite(window[i][0], sizeof(char), 1000, fd);
+        filled[i]=0;
+        size=-1000;
+        i++;
+        if(i>=window_size)
+        {
+            i = 0;
+        } 
+    }
+    first_to_save = i;
+    if(i == 0)
+    {
+        last_to_save = window_size - 1;
+    }
+    else
+    {
+        last_to_save = i - 1;
+    }
+    
+}
+int receive_data(int sent, int fd, struct sockaddr_in server_address, FILE *file)
 {
     fd_set readfds;
     FD_ZERO(&readfds);
@@ -89,12 +119,13 @@ int receive_data(int sent, int fd, struct sockaddr_in server_address)
             }
         }
     }
-    save_in_file();
+    save_in_file(file);
     return 0;
 }
-int download(char *addr, int port, FILE *file, int size)
+int download(char *addr, int port, FILE *file, int s)
 {
     // na podsawiw wykładu 4
+    size = s;
     int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
     if(sockfd == -1)
 	{
@@ -148,7 +179,7 @@ int download(char *addr, int port, FILE *file, int size)
             }
             if(filled[j] == 0)
             {
-                get(start_cash+i*packet_length, packet_length);
+                get(sockfd, server_address, start_cash+i*packet_length, packet_length);
                 sent++;
             }
             if(filled[j] > 0)
@@ -161,7 +192,7 @@ int download(char *addr, int port, FILE *file, int size)
                 continue;
             }
         }
-        receive_data(sent);
+        receive_data(sent,sockfd,server_address,  file);
 
 
     }
