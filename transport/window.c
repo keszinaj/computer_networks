@@ -12,16 +12,36 @@ int all_memory_square = 1;
 int start_cash= 0;
 int length_of_last_packet = 0;
 void get(int start, int length)
-int proba(int size)
+int download(char *addr, int port, FILE *file, int s)
 {
-    //preprocesing dla pierwszej pętli while
+    // na podsawiw wykładu 4
+    size = s;
+    old_size = s;
+    int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+    if(sockfd == -1)
+	{
+		fprintf(stderr, "Error: Problem with socket: %s\n", strerror(errno));
+		return EXIT_FAILURE;
+	}
+    struct sockaddr_in server_address;
+	bzero (&server_address, sizeof(server_address));
+	server_address.sin_family = AF_INET;
+	server_address.sin_port = htons(port);
+    int correct = inet_pton(AF_INET, addr, &server_address.sin_addr);
+    if(correct<=0)
+    {
+        fprintf(stderr, "Error: Wrong Ip address"); 
+        return EXIT_FAILURE;
+    }
     if(size<packet_length)
     {
         length_of_last_packet = size;
     }
     else
     {
-        int cash_needed = ceil(size/1000);
+	int cash_needed = size/1000;
+        if(cash_needed*1000 <size)
+		cash_needed++;
         if(cash_needed>window_size)
         {
             last_to_save = window_size - 1;
@@ -38,8 +58,11 @@ int proba(int size)
             length_of_last_packet = packet_length;
         }
     }
+    printf("wielkos ostatniego pakietu: %d\n", length_of_last_packet);
+    printf("liczba okien: %d\n", all_memory_square);
 
     int j,i;
+    int sent = 0;
     while(size>0)
     {
         for(i =0; i<all_memory_square; i++)
@@ -51,21 +74,21 @@ int proba(int size)
             }
             if(filled[j] == 0)
             {
-                get(start_cash+i*packet_length, packet_length);
+                get(sockfd, server_address, start_cash+i*packet_length, packet_length);
+                sent++;
             }
             if(filled[j] > 0)
             {
                 continue;
             }
-            //ostatni pakiet
-            if(filled[j] == -1)
-            {
-                continue;
-            }
         }
-    //_______________________________________
-        RECEIVE_DATA();
-    //_______________________________________
+        receive_data(sent,sockfd,server_address,  file);
+
 
     }
+
+
+
+   
+   
 }

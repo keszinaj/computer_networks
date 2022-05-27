@@ -17,17 +17,9 @@ int all_memory_square = 1;
 int start_cash= 0;
 int length_of_last_packet = 0;
 int size = 0;
-int old_size =0;
-int cash_needed = 0;
-
 int get(int sockfd, struct sockaddr_in addr, int start, int length)
 {
-    if(old_size-start<packet_length)
-    {
-	    length = old_size-start;
-    }
     char buffer[40];
-    printf("GET %d %d\n", start, length);
     sprintf(buffer, "GET %d %d\n", start, length);
     size_t buffer_len = strlen(buffer);
     if (sendto(sockfd, buffer, length, 0, (struct sockaddr *) &addr, sizeof(addr)) < 0)
@@ -38,12 +30,8 @@ int get(int sockfd, struct sockaddr_in addr, int start, int length)
     return 0;
 }
 
-void save_in_file(FILE *fd, int pos)
+void save_in_file(FILE *fd)
 {
-    for(int j= 0; j<30; j++)
-    {
-	    printf("%d wolne: %d\n", j, filled[j]);
-    }
     int i = first_to_save;
     if(filled[i]== 0)
     {
@@ -51,25 +39,14 @@ void save_in_file(FILE *fd, int pos)
     }
     while(filled[i]>0)
     {
-	printf("zapisany %d\n", i);
-	fwrite(&window[i][0], sizeof(char), filled[i], fd);
+        fwrite(&window[i][0], sizeof(char), 1000, fd);
         filled[i]=0;
-        size-=1000;
+        size=-1000;
         i++;
-	cash_needed--;
-        start_cash+=1000;
-	if(i>= window_size)
+        if(i>= window_size)
         {
             i = 0;
         } 
-    }
-    if(cash_needed>1000)
-    {
-	    all_memory_square = 1000;
-    }
-    else
-    {
-	    all_memory_square = cash_needed;
     }
     first_to_save = i;
     if(i == 0)
@@ -80,7 +57,6 @@ void save_in_file(FILE *fd, int pos)
     {
         last_to_save = i - 1;
     }
-    
     
 }
 int receive_data(int sent, int fd, struct sockaddr_in server_address, FILE *file)
@@ -118,22 +94,19 @@ int receive_data(int sent, int fd, struct sockaddr_in server_address, FILE *file
         }
         sscanf(buffer, "DATA %d %d\n", &pos, &len);
         //okej teraz trzeba znalesc gdzie dac ten datagram i go tam zapisac
-        if(len ==1000 || len<1000)
+        if(len ==1000)
         {
             add = pos-start_cash;
             add = add/1000;
-            k = first_to_save+add;
-	    printf("otrzymaem %d %d k: %d, sc: %d\n", pos, len, k, start_cash);
-           if( k<first_to_save)
-		   continue;
-	    if(k >= window_size)
+            k = first_to_save + add;
+            if(k >= window_size)
             {
                 k -= window_size; 
             }
             if(filled[k]==0)
             {
                 memcpy(&window[k][0], strchr(buffer, '\n') + 1, len);
-                filled[k]=len;
+                filled[k]=1;
             }
 
         }
@@ -141,18 +114,17 @@ int receive_data(int sent, int fd, struct sockaddr_in server_address, FILE *file
             if(filled[last_to_save]==0)
             {
                 memcpy(&window[last_to_save][0], strchr(buffer, '\n') + 1, len);
-                filled[last_to_save]=len;
+                filled[last_to_save]=1;
             }
         }
     }
-    save_in_file(file, pos);
+    save_in_file(file);
     return 0;
 }
 int download(char *addr, int port, FILE *file, int s)
 {
     // na podsawiw wykładu 4
     size = s;
-    old_size = s;
     int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
     if(sockfd == -1)
 	{
@@ -175,9 +147,7 @@ int download(char *addr, int port, FILE *file, int s)
     }
     else
     {
-	cash_needed = size/1000;
-        if(cash_needed*1000 <size)
-		cash_needed++;
+        int cash_needed = ceil(size/1000);
         if(cash_needed>window_size)
         {
             last_to_save = window_size - 1;
@@ -194,26 +164,21 @@ int download(char *addr, int port, FILE *file, int s)
             length_of_last_packet = packet_length;
         }
     }
-    printf("wielkos ostatniego pakietu: %d\n", length_of_last_packet);
-    printf("liczba okien: %d\n", all_memory_square);
-    printf("size: %d\n", size);
+
     int j,i;
     int sent = 0;
     while(size>0)
     {
         for(i =0; i<all_memory_square; i++)
         {
-	    printf("first to save: %d", first_to_save);
             j = first_to_save+i;
-	    int st = start_cash;
             if(j>=window_size)
             {
                j = j - window_size;
-	       st = start_cash + 1000000;
             }
             if(filled[j] == 0)
             {
-                get(sockfd, server_address, st+i*packet_length, packet_length);
+                get(sockfd, server_address, start_cash+i*packet_length, packet_length);
                 sent++;
             }
             if(filled[j] > 0)
@@ -227,7 +192,7 @@ int download(char *addr, int port, FILE *file, int s)
             }
         }
         receive_data(sent,sockfd,server_address,  file);
-        printf("size %d\n", size);   
+
 
     }
 
