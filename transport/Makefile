@@ -1,14 +1,10 @@
-traceroute: main.o traceroute.o prettyprint.o receive.o send.o
-	gcc main.o traceroute.o prettyprint.o receive.o send.o -o traceroute 
-send.o: ./src/send.c ./src/send.h
-	gcc -c -std=gnu99 -Wall -Wextra -Werror ./src/send.c	
-receive.o: ./src/receive.c ./src/receive.h
-	gcc -c -std=gnu99 -Wall -Wextra -Werror ./src/receive.c
-prettyprint.o: ./src/prettyprint.c ./src/prettyprint.h
-	gcc -c -std=gnu99 -Wall -Wextra -Werror ./src/prettyprint.c
-traceroute.o: ./src/traceroute.c ./src/traceroute.h
-	gcc -c -std=gnu99 -Wall -Wextra -Werror ./src/traceroute.c 
-main.o: ./src/main.c 
-	gcc -c -std=gnu99 -Wall -Wextra -Werror ./src/main.c 
+transport: main.o download.o
+	gcc main.o download.o -o transport 
+download.o: download.c download.h
+	gcc -c -std=gnu99 -Wall -Wextra -Werror download.c	
+main.o: main.c 
+	gcc -c -std=gnu99 -Wall -Wextra -Werror main.c 
 clean: 
-	rm *.o traceroute
+	rm *.o 
+distclean:
+	rm *.o transport
