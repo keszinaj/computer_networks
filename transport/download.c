@@ -8,17 +8,17 @@
 #include <math.h>
 
 /*
-   1000 okien o wielkości 1000 bajtów
+   okno ma wielkość 1000 na 1000
 */
-#define window_size 1000
+#define win_size 1000
 #define packet_length 1000
 
 /*
    Okno przesuwne trzymam w tablicy 2D. 
    Mam też strukturę pomocnicza, która trzyma w sobie stan okna
 */
-int filled[window_size] = {0};
-char window[window_size][packet_length];
+int filled[win_size] = {0};
+char window[win_size][packet_length];
 
 /*
     Pomocnicze zmienne globalne
@@ -37,11 +37,11 @@ int get_request(int sockfd, struct sockaddr_in addr, int start, int length)
 {
     if(old_size - start < packet_length)
     {
-	    length = old_size-start;
+        length = old_size-start;
     }
     //wyłapuje dziwny bład
     if( length < 0)
-	    return EXIT_SUCCESS;
+        return EXIT_SUCCESS;
     char buffer[50];
     sprintf(buffer, "GET %d %d\n", start, length);
     size_t buffer_len = strlen(buffer);
@@ -59,30 +59,30 @@ int get_request(int sockfd, struct sockaddr_in addr, int start, int length)
 void save_in_file(FILE *fd)
 {
     int i = first_to_save;
-    if(filled[i]== 0)
+    if( filled[i] == 0 )
     {
         return;
     }
-    while(filled[i]>0)
+    while( filled[i] > 0 )
     {
         fwrite(&window[i][0], sizeof(char), filled[i], fd);
         filled[i]=0;
-        size-=1000;
+        size-=packet_length;
         i++;
-	    cash_needed--;
-        start_cash+=1000;
-	    if(i>= window_size)
+        cash_needed--;
+        start_cash+=packet_length;
+        if(i>= win_size)
         {
             i = 0;
         } 
     }
-    if(cash_needed>1000)
+    if(cash_needed > win_size )
     {
-	    all_memory_square = 1000;
+        all_memory_square = win_size ;
     }
     else
     {
-	    all_memory_square = cash_needed;
+        all_memory_square = cash_needed;
     }
     first_to_save = i; 
 }
@@ -111,12 +111,14 @@ int receive_data(int sent, int fd, struct sockaddr_in server_address, FILE *file
         {
             break;
         }
-        if(ready < 0){
+        if(ready < 0)
+        {
             fprintf(stderr, "Error: Select error %s\n", strerror(errno));
             return EXIT_FAILURE;
         }
         ssize_t packet_len = recvfrom (fd, buffer, IP_MAXPACKET, 0, (struct sockaddr*)&sender, &sender_len);
-        if (packet_len < 0) {
+        if (packet_len < 0) 
+        {
             fprintf(stderr, "recvfrom error: %s\n", strerror(errno)); 
             return EXIT_FAILURE;
         }
@@ -127,17 +129,17 @@ int receive_data(int sent, int fd, struct sockaddr_in server_address, FILE *file
 
         sscanf(buffer, "DATA %d %d\n", &pos, &len);
 
-        if(len == 1000 || len < 1000)
+        if(len == packet_length  || len < packet_length)
         {
             add = pos-start_cash;
-            add = add/1000;
+            add = add/packet_length;
             k = first_to_save+add;
 
            if( k<first_to_save)
-		   continue;
-           if(k >= window_size)
+              continue;
+           if(k >= win_size)
             {
-                k -= window_size; 
+                k -= win_size; 
             }
             if(filled[k]==0)
             {
@@ -157,19 +159,21 @@ int receive_data(int sent, int fd, struct sockaddr_in server_address, FILE *file
 */
 int download(char *addr, int port, FILE *file, int s)
 {
-    // na podsawiw wykładu 4
+    
     size = s;
     old_size = s;
+
+    // na podsawiw wykładu 4
     int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
     if(sockfd == -1)
-	{
-		fprintf(stderr, "Error: Problem with socket: %s\n", strerror(errno));
-		return EXIT_FAILURE;
-	}
+   {
+        fprintf(stderr, "Error: Problem with socket: %s\n", strerror(errno));
+        return EXIT_FAILURE;
+    }
     struct sockaddr_in server_address;
-	bzero (&server_address, sizeof(server_address));
-	server_address.sin_family = AF_INET;
-	server_address.sin_port = htons(port);
+    bzero (&server_address, sizeof(server_address));
+    server_address.sin_family = AF_INET;
+    server_address.sin_port = htons(port);
     int correct = inet_pton(AF_INET, addr, &server_address.sin_addr);
     if(correct<=0)
     {
@@ -178,12 +182,12 @@ int download(char *addr, int port, FILE *file, int s)
     }
     if(size>=packet_length)
     {
-	    cash_needed = size/1000;
-        if(cash_needed*1000 <size)
-		cash_needed++;
-        if(cash_needed>window_size)
+        cash_needed = size/packet_length;
+        if(cash_needed*packet_length <size)
+        cash_needed++;
+        if(cash_needed>win_size)
         {
-            all_memory_square = window_size;
+            all_memory_square = win_size;
         }
         else
         {
@@ -199,10 +203,10 @@ int download(char *addr, int port, FILE *file, int s)
         {
             j = first_to_save+i;
             int st = start_cash;
-            if(j>=window_size)
+            if(j>=win_size)
             {
-               j = j - window_size;
-               st = start_cash + 1000000;
+               j = j - win_size;
+               st = start_cash + (packet_length*win_size) ;
             }
             if(filled[j] == 0)
             {
@@ -218,5 +222,5 @@ int download(char *addr, int port, FILE *file, int s)
         printf("Do pobrania: %d\n", size);   
 
     }
-    return 0;
+    return EXIT_SUCCESS;
 }
